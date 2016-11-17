@@ -1,23 +1,29 @@
 require 'redis'
+require 'intervals/loader'
 
 module Intervals
   # This class has #load and #search methods
   class Base
-    attr_reader :redis
+    attr_reader :loader
 
     def initialize(redis = Redis.new)
-      @redis = redis
+      @loader = Loader.new(redis)
     end
 
     # You load intervals by specifying it along with some
     # name for it
     # i = Intervals::Base.new(Redis.new)
-    # i.load(beeline_ips: [1, 10], mts_ips: [11, 20], russia_ips: [8, 15])
+    # i.load([ {beeline_ips: [1, 10], {mts_ips: [11, 20] ])
     def load(data = {})
-      data.each_with_object({}) do |(range_name, range_limits), result|
-        @lower_bound = range_limits.first
-        @upper_bound = range_limits.last
-        @range_name  = range_name
+      result = calculate(data)
+      loader.load(result)
+    end
+
+    def calculate(data)
+      data.each_with_object({}) do |range_data, result|
+        @lower_bound = range_data.values.first.first
+        @upper_bound = range_data.values.first.last
+        @range_name  = range_data.keys.first
 
         setup_key_for_lower_bound(result)
         last_key = copy_range_name_to_keys(result)
