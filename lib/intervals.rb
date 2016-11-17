@@ -1,6 +1,7 @@
-require "redis"
+require 'redis'
 
 module Intervals
+  # This class has #load and #search methods
   class Base
     attr_reader :redis
 
@@ -12,59 +13,55 @@ module Intervals
     # name for it
     # i = Intervals::Base.new(Redis.new)
     # i.load(beeline_ips: [1, 10], mts_ips: [11, 20], russia_ips: [8, 15])
-    def load(data={})
-      result = {}
+    def load(data = {})
+      data.each_with_object({}) do |(range_name, range_limits), result|
+        @lower_bound = range_limits.first
+        @upper_bound = range_limits.last
+        @range_name  = range_name
 
-      data.each do |range_name, range_limits|
-        lower_bound = range_limits.first
-        upper_bound = range_limits.last
-
-        if result[lower_bound]
-          result[lower_bound].push(range_name)
-        else
-          result[lower_bound] = [range_name]
-          start_key_new = true
-        end
-
-
-        #result[upper_bound + 1] ? nil : result[upper_bound + 1] = []
-        sorted_keys = result.keys.sort #=> [1,4,6]
-        sorted_keys.each_with_index do |key, index|
-          @last_key = key
-          prev_key = sorted_keys[index - 1]
-          if key == lower_bound && start_key_new && key > prev_key
-            result[lower_bound] |= result[prev_key]
-          else
-            if key <= upper_bound && key > lower_bound
-              result[key].push(range_name)
-            end
-            if key > upper_bound
-              @last_key = prev_key
-              break
-            end
-          end
-        end
-
-        if result[upper_bound + 1].nil?
-          result[upper_bound + 1] = result[@last_key] - [range_name]
-        end
+        setup_key_for_lower_bound(result)
+        last_key = copy_range_name_to_keys(result)
+        setup_key_for_upper_bound(result, last_key)
       end
-      result
     end
 
     private
-    def x
-        result[lower_bound].push(range_name)
-        result[upper_bound + 1].empty? ? result[upper_bound + 1] = [] : nil
 
-        sorted_keys = result.keys.sort
-        keys_to_update = sorted_keys.each_with_index.reduce([]) do |acc, (n, i)|
-        end
+    def setup_key_for_lower_bound(result)
+      if result[@lower_bound]
+        result[@lower_bound].push(@range_name)
+        @lower_bound_key_new = false
+      else
+        result[@lower_bound] = [@range_name]
+        @lower_bound_key_new = true
+      end
+    end
 
-        keys_to_update.each do |key, index|
-          previous_element = result[keys_to_update[index - 1]]
-          result[key] |= result[previous_element]
+    def copy_range_name_to_keys(result)
+      sorted_keys = result.keys.sort #=> [1,4,6]
+      last_key    = nil
+
+      sorted_keys.each_with_index do |key, index|
+        next if key < @lower_bound
+        last_key = key
+        prev_key = sorted_keys[index - 1]
+
+        if key == @lower_bound && @lower_bound_key_new && key > prev_key
+          result[@lower_bound] |= result[prev_key]
+        elsif key <= @upper_bound && key > @lower_bound
+          result[key].push(@range_name)
+        elsif key > @upper_bound
+          last_key = prev_key
+          break
         end
+      end
+      last_key
+    end
+
+    def setup_key_for_upper_bound(result, last_key)
+      if result[@upper_bound + 1].nil?
+        result[@upper_bound + 1] = result[last_key] - [@range_name]
+      end
     end
   end
 end
