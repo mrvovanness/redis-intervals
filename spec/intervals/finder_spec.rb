@@ -40,4 +40,9 @@ describe Intervals::Finder do
     result = finder.find(21)
     expect(result).to eq ['']
   end
+
+  it 'finds empty range for ip(0)' do
+    result = finder.find(0)
+    expect(result).to eq []
+  end
 end
