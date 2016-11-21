@@ -146,4 +146,16 @@ describe Intervals::Base do
       expect(Redis.new.keys.size).to eq 6
     end
   end
+
+  context 'search data in redis' do
+    it 'search' do
+      i.load([
+        { beeline_ips: [ 1, 10] },
+        { mts_ips:     [ 11, 20] },
+        { russia_ips:  [ 8, 15] }
+      ])
+      expect(i.find(9)).to eq ['russia_ips', 'beeline_ips']
+      expect(i.find(15)).to eq ['mts_ips', 'russia_ips']
+    end
+  end
 end

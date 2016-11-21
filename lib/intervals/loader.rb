@@ -1,8 +1,9 @@
 module Intervals
   class Loader
+    include Helper
     attr_reader :redis, :prefix, :data
 
-    def initialize(redis, prefix = nil)
+    def initialize(redis, prefix)
       @redis  = redis
       @prefix = prefix
     end
@@ -28,11 +29,8 @@ module Intervals
         rank = key.split(':').last
         [rank, key]
       end
-      redis.zadd("#{prefix}:range_index", keys_to_index)
+      redis.zadd(range_index_key, keys_to_index)
     end
 
-    def range_key_prefix
-      "#{prefix}:range:"
-    end
   end
 end

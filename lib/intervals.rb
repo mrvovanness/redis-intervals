@@ -1,13 +1,16 @@
 require 'redis'
+require 'intervals/helper'
 require 'intervals/loader'
+require 'intervals/finder'
 
 module Intervals
   # This class has #load and #search methods
   class Base
-    attr_reader :loader
+    attr_reader :loader, :finder
 
-    def initialize(redis = Redis.new)
-      @loader = Loader.new(redis)
+    def initialize(redis = Redis.new, prefix = nil)
+      @loader = Loader.new(redis, prefix)
+      @finder = Finder.new(redis, prefix)
     end
 
     # You load intervals by specifying it along with some
@@ -17,6 +20,10 @@ module Intervals
     def load(data = {})
       result = calculate(data)
       loader.load(result)
+    end
+
+    def find(number)
+      finder.find(number)
     end
 
     def calculate(data)
