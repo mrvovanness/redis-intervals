@@ -17,9 +17,9 @@ Then, load intervals by specifying it inside array as hashes with range name as 
 ```ruby
 i = Intervals::Base.new(Redis.new, 'my_prefix')
 i.load([
-  { rangeA: [1, 10],
-  { rangeB: [11, 20],
-  { rangeC: [8, 30]}
+  { rangeA: [1, 10] },
+  { rangeB: [11, 20] },
+  { rangeC: [8, 30] }}
 ])
 ```
 Your ranges can intersect, one range name can be used several times.
@@ -41,4 +41,3 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/mrvova
 ## License
 
 The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
-
